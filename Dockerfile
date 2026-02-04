@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Instalar dependências do sistema
+# Instalar dependências
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
@@ -15,8 +15,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/app/ /app/
 COPY frontend/ /app/frontend/
 
-# Porta
-EXPOSE 10000
+# Porta (Railway usa $PORT)
+EXPOSE 8000
 
-# Comando
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "10000"]
+# Comando direto (sem cd)
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
