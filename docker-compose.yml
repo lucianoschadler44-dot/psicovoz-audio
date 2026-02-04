@@ -1,17 +1,14 @@
+version: '3.8'
+
 services:
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: psicovoz-backend
+    build: ./backend
+    container_name: psicovoz-audio-backend
     ports:
-      - "8000:8000"
+      - "8001:8000"
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - REDIS_URL=redis://redis:6379
-      - WHISPER_MODEL=${WHISPER_MODEL:-base}
-      - TTS_MODEL=${TTS_MODEL:-tts_models/pt/cv/vits}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
     volumes:
       - ./backend/app:/app
       - ./frontend:/app/frontend
@@ -21,7 +18,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: psicovoz-redis
+    container_name: psicovoz-audio-redis
     ports:
-      - "6379:6379"
+      - "6380:6379"
     restart: unless-stopped

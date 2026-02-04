@@ -118,12 +118,6 @@
         
         .voice-mode-info { text-align: center; padding: 10px; background: #ffffff10; border-radius: 10px; margin-bottom: 15px; }
         .voice-mode-info p { font-size: 0.85em; color: #aaa; }
-
-        /* Slider de velocidade */
-        .speed-control { margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .speed-control label { font-size: 0.85em; color: #aaa; }
-        .speed-control input[type="range"] { width: 120px; cursor: pointer; }
-        #speed-value { color: #4a90a4; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -187,10 +181,6 @@
             
             <div class="voice-mode-info">
                 <p>🎤 Clique no microfone e fale OU digite sua mensagem</p>
-            <div class="speed-control">
-                <label>🔊 Velocidade: <span id="speed-value">1.0x</span></label>
-                <input type="range" id="speed-slider" min="0.5" max="2.0" step="0.1" value="1.0" onchange="updateSpeed(this.value)">
-            </div>
             </div>
             
             <div class="chat-messages" id="messages"></div>
@@ -220,7 +210,6 @@
         let recognition = null;
         let synthesis = window.speechSynthesis;
         let voices = [];
-        let speechRate = 1.0; // Velocidade da fala
 
         // Dados dos terapeutas com gênero para voz
         const therapistsData = {
@@ -341,13 +330,6 @@
         }
         loadVoices();
 
-        
-        // Atualizar velocidade da fala
-        function updateSpeed(value) {
-            speechRate = parseFloat(value);
-            document.getElementById('speed-value').textContent = speechRate.toFixed(1) + 'x';
-        }
-
         // Selecionar voz baseada no gênero e idioma
         function selectVoice(gender) {
             const voiceList = synthesis.getVoices();
@@ -393,7 +375,7 @@
 
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.voice = selectVoice(gender);
-                utterance.rate = speechRate; // Velocidade controlada pelo slider
+                utterance.rate = 0.9; // Um pouco mais lento para clareza
                 utterance.pitch = gender === 'female' ? 1.1 : 0.9;
                 utterance.volume = 1;
 
