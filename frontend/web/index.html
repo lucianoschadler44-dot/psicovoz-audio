@@ -356,7 +356,7 @@
             const priorities = [
                 // PT-BR
                 (v) => v.lang === 'pt-BR' && v.name.toLowerCase().includes(gender === 'female' ? 'femin' : 'mascul'),
-                (v) => v.lang === 'pt-BR' && ((gender === 'female' && v.name.toLowerCase().includes('luciana')) || (gender === 'male' && v.name.toLowerCase().includes('daniel'))),
+                (v) => v.lang === 'pt-BR' && ((gender === 'female' && (v.name.toLowerCase().includes('luciana') || v.name.toLowerCase().includes('maria'))) || (gender === 'male' && v.name.toLowerCase().includes('daniel'))),
                 (v) => v.lang === 'pt-BR',
                 // PT-PT
                 (v) => v.lang === 'pt-PT',
