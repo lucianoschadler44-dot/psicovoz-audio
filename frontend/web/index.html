@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PsicoVoz - Assistente Terapêutico</title>
+    <title>PsicoVoz - Assistente Terapêutico por Voz</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -49,12 +49,12 @@
         .therapist-info p { color: #888; font-size: 0.9em; }
         .therapist-info .quote { font-style: italic; color: #aaa; font-size: 0.8em; margin-top: 5px; }
         .therapist-info .style-badge { font-size: 0.75em; color: #666; margin-top: 5px; }
-        .chat-messages { height: 320px; overflow-y: auto; padding: 20px; background: #ffffff05; border-radius: 15px; margin-bottom: 20px; }
+        .chat-messages { height: 280px; overflow-y: auto; padding: 20px; background: #ffffff05; border-radius: 15px; margin-bottom: 20px; }
         .message { margin-bottom: 15px; padding: 12px 18px; border-radius: 15px; max-width: 85%; animation: fadeIn 0.3s ease; line-height: 1.5; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .message.therapist { background: linear-gradient(135deg, #2d4a5e, #1a3a4a); margin-right: auto; border-bottom-left-radius: 5px; }
         .message.user { background: linear-gradient(135deg, #4a3728, #3a2718); margin-left: auto; border-bottom-right-radius: 5px; }
-        .input-area { display: flex; gap: 10px; }
+        .input-area { display: flex; gap: 10px; align-items: center; }
         .input-area input {
             flex: 1; padding: 15px 20px; border: none; border-radius: 25px;
             background: #ffffff15; color: #fff; font-size: 1em;
@@ -62,11 +62,44 @@
         .input-area input::placeholder { color: #666; }
         .input-area input:focus { outline: 2px solid #4a90a4; }
         .input-area button {
-            padding: 15px 30px; border: none; border-radius: 25px;
+            padding: 15px 25px; border: none; border-radius: 25px;
             background: linear-gradient(135deg, #4a90a4, #357a8a); color: #fff;
             font-size: 1em; cursor: pointer; transition: all 0.3s ease;
         }
         .input-area button:hover { transform: scale(1.05); }
+        .input-area button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* Botão de Microfone */
+        .mic-btn {
+            width: 60px; height: 60px; border-radius: 50%; border: none;
+            background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff;
+            font-size: 1.5em; cursor: pointer; transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .mic-btn:hover { transform: scale(1.1); }
+        .mic-btn.recording {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+            50% { box-shadow: 0 0 0 15px rgba(46, 204, 113, 0); }
+        }
+        
+        /* Indicador de fala */
+        .speaking-indicator {
+            display: none; align-items: center; justify-content: center;
+            gap: 5px; padding: 10px; color: #4a90a4;
+        }
+        .speaking-indicator.active { display: flex; }
+        .speaking-indicator .dot {
+            width: 8px; height: 8px; background: #4a90a4; border-radius: 50%;
+            animation: bounce 0.6s infinite alternate;
+        }
+        .speaking-indicator .dot:nth-child(2) { animation-delay: 0.2s; }
+        .speaking-indicator .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { to { transform: translateY(-10px); opacity: 0.3; } }
+        
         .back-btn { background: #ffffff20; border: none; color: #fff; padding: 10px 20px; border-radius: 20px; cursor: pointer; margin-bottom: 20px; }
         .back-btn:hover { background: #ffffff30; }
         .status { text-align: center; padding: 10px; color: #888; font-size: 0.85em; }
@@ -82,13 +115,16 @@
         .line-badge.psicanalise { background: #8B451320; color: #D2691E; }
         .line-badge.gestalt { background: #228B2220; color: #32CD32; }
         .line-badge.tcc { background: #4682B420; color: #87CEEB; }
+        
+        .voice-mode-info { text-align: center; padding: 10px; background: #ffffff10; border-radius: 10px; margin-bottom: 15px; }
+        .voice-mode-info p { font-size: 0.85em; color: #aaa; }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🧠 PsicoVoz</h1>
-            <p>Assistente Terapêutico - Apoio Psicológico</p>
+            <h1>🎙️ PsicoVoz</h1>
+            <p>Assistente Terapêutico por Voz - Apoio Psicológico</p>
         </header>
 
         <!-- TELA 1: Escolher Linha -->
@@ -130,7 +166,7 @@
             <div class="therapists" id="therapists-grid"></div>
         </div>
 
-        <!-- TELA 3: Chat -->
+        <!-- TELA 3: Chat com Voz -->
         <div id="screen-chat" class="screen">
             <button class="back-btn" onclick="backToTherapists()">← Voltar</button>
             <div class="chat-header">
@@ -142,10 +178,25 @@
                     <p class="style-badge" id="therapist-style"></p>
                 </div>
             </div>
+            
+            <div class="voice-mode-info">
+                <p>🎤 Clique no microfone e fale OU digite sua mensagem</p>
+            </div>
+            
             <div class="chat-messages" id="messages"></div>
+            
+            <div class="speaking-indicator" id="speaking-indicator">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <span style="margin-left: 10px;">Terapeuta falando...</span>
+            </div>
+            
             <div class="status" id="status">Conectando...</div>
+            
             <div class="input-area">
-                <input type="text" id="user-input" placeholder="Digite sua mensagem..." onkeypress="if(event.key==='Enter')sendMessage()">
+                <button class="mic-btn" id="mic-btn" onclick="toggleRecording()">🎤</button>
+                <input type="text" id="user-input" placeholder="Ou digite sua mensagem..." onkeypress="if(event.key==='Enter')sendMessage()">
                 <button onclick="sendMessage()">Enviar</button>
             </div>
         </div>
@@ -155,26 +206,31 @@
         let ws = null;
         let currentLine = null;
         let currentTherapist = null;
+        let isRecording = false;
+        let recognition = null;
+        let synthesis = window.speechSynthesis;
+        let voices = [];
 
+        // Dados dos terapeutas com gênero para voz
         const therapistsData = {
             psicanalise: [
                 { 
                     id: 'freud', name: 'Sigmund Freud', years: '1856-1939', avatar: '🧔', 
-                    specialty: 'Pai da Psicanálise',
+                    specialty: 'Pai da Psicanálise', gender: 'male',
                     style: 'Exploração do inconsciente, sonhos, livre associação, transferência',
                     quote: '"O sonho é a estrada real para o inconsciente"',
                     color: '#8B4513'
                 },
                 { 
                     id: 'lacan', name: 'Jacques Lacan', years: '1901-1981', avatar: '👤',
-                    specialty: 'Psicanálise Estrutural',
+                    specialty: 'Psicanálise Estrutural', gender: 'male',
                     style: 'Linguagem, significantes, desejo do Outro, Real-Simbólico-Imaginário',
                     quote: '"O inconsciente é estruturado como linguagem"',
                     color: '#4169E1'
                 },
                 { 
                     id: 'jung', name: 'Carl Jung', years: '1875-1961', avatar: '🌙',
-                    specialty: 'Psicologia Analítica',
+                    specialty: 'Psicologia Analítica', gender: 'male',
                     style: 'Arquétipos, inconsciente coletivo, sombra, individuação, sonhos simbólicos',
                     quote: '"Quem olha para fora sonha, quem olha para dentro desperta"',
                     color: '#9932CC'
@@ -183,21 +239,21 @@
             gestalt: [
                 { 
                     id: 'fritz', name: 'Fritz Perls', years: '1893-1970', avatar: '🔮',
-                    specialty: 'Fundador da Gestalt',
+                    specialty: 'Fundador da Gestalt', gender: 'male',
                     style: 'Direto, confrontador, aqui-agora, awareness corporal, experimentos',
                     quote: '"Perca a cabeça e caia em si"',
                     color: '#228B22'
                 },
                 { 
                     id: 'laura', name: 'Laura Perls', years: '1905-1990', avatar: '💫',
-                    specialty: 'Gestalt Relacional',
+                    specialty: 'Gestalt Relacional', gender: 'female',
                     style: 'Acolhedora, suporte, contato, presença, respiração, grounding',
                     quote: '"O contato é a realização da diferença"',
                     color: '#3CB371'
                 },
                 { 
                     id: 'zinker', name: 'Joseph Zinker', years: '1934-2017', avatar: '🎨',
-                    specialty: 'Gestalt Criativa',
+                    specialty: 'Gestalt Criativa', gender: 'male',
                     style: 'Artístico, metáforas, experimentos criativos, imaginação, poesia',
                     quote: '"A terapia é uma obra de arte em criação"',
                     color: '#2E8B57'
@@ -206,27 +262,158 @@
             tcc: [
                 { 
                     id: 'beck', name: 'Aaron Beck', years: '1921-2021', avatar: '📊',
-                    specialty: 'Pai da Terapia Cognitiva',
+                    specialty: 'Pai da Terapia Cognitiva', gender: 'male',
                     style: 'Colaborativo, pensamentos automáticos, evidências, questionamento socrático',
                     quote: '"Nossos pensamentos moldam nossa realidade"',
                     color: '#4682B4'
                 },
                 { 
                     id: 'ellis', name: 'Albert Ellis', years: '1913-2007', avatar: '⚡',
-                    specialty: 'TREC - Terapia Racional Emotiva',
-                    style: 'Direto, confrontador, modelo ABC, disputa de crenças irracionais',
+                    specialty: 'TREC - Terapia Racional Emotiva', gender: 'male',
+                    style: 'Confrontação de crenças irracionais, modelo ABC',
                     quote: '"Não são os eventos que nos perturbam, mas nossa visão sobre eles"',
                     color: '#B22222'
                 },
                 { 
                     id: 'judith', name: 'Judith Beck', years: '1954-', avatar: '📚',
-                    specialty: 'TCC Contemporânea',
+                    specialty: 'TCC Contemporânea', gender: 'female',
                     style: 'Estruturada, didática, tarefas práticas, cartões de enfrentamento',
                     quote: '"A mudança cognitiva facilita a mudança comportamental"',
                     color: '#5F9EA0'
                 }
             ]
         };
+
+        // Inicializar reconhecimento de voz
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.lang = 'pt-BR';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+
+                recognition.onresult = (event) => {
+                    const text = event.results[0][0].transcript;
+                    document.getElementById('user-input').value = text;
+                    sendMessage();
+                };
+
+                recognition.onend = () => {
+                    isRecording = false;
+                    document.getElementById('mic-btn').classList.remove('recording');
+                };
+
+                recognition.onerror = (event) => {
+                    console.error('Erro no reconhecimento:', event.error);
+                    isRecording = false;
+                    document.getElementById('mic-btn').classList.remove('recording');
+                    if (event.error === 'not-allowed') {
+                        alert('Permissão de microfone negada. Por favor, permita o acesso ao microfone.');
+                    }
+                };
+            } else {
+                console.warn('Reconhecimento de voz não suportado');
+                document.getElementById('mic-btn').style.display = 'none';
+            }
+        }
+
+        // Carregar vozes disponíveis
+        function loadVoices() {
+            voices = synthesis.getVoices();
+            console.log('Vozes disponíveis:', voices.map(v => `${v.name} (${v.lang})`));
+        }
+
+        // Carregar vozes quando disponíveis
+        if (synthesis.onvoiceschanged !== undefined) {
+            synthesis.onvoiceschanged = loadVoices;
+        }
+        loadVoices();
+
+        // Selecionar voz baseada no gênero e idioma
+        function selectVoice(gender) {
+            const voiceList = synthesis.getVoices();
+            
+            // Prioridades de busca
+            const priorities = [
+                // PT-BR
+                (v) => v.lang === 'pt-BR' && v.name.toLowerCase().includes(gender === 'female' ? 'femin' : 'mascul'),
+                (v) => v.lang === 'pt-BR' && ((gender === 'female' && v.name.toLowerCase().includes('luciana')) || (gender === 'male' && v.name.toLowerCase().includes('daniel'))),
+                (v) => v.lang === 'pt-BR',
+                // PT-PT
+                (v) => v.lang === 'pt-PT',
+                (v) => v.lang.startsWith('pt'),
+                // ES como fallback
+                (v) => v.lang.startsWith('es') && ((gender === 'female' && v.name.toLowerCase().includes('femin')) || (gender === 'male' && !v.name.toLowerCase().includes('femin'))),
+                (v) => v.lang.startsWith('es'),
+                // Qualquer voz
+                (v) => true
+            ];
+
+            for (const priority of priorities) {
+                const voice = voiceList.find(priority);
+                if (voice) {
+                    console.log(`Voz selecionada: ${voice.name} (${voice.lang}) para gênero ${gender}`);
+                    return voice;
+                }
+            }
+            
+            return voiceList[0]; // Fallback
+        }
+
+        // Falar texto
+        function speak(text, gender = 'male') {
+            return new Promise((resolve) => {
+                if (!synthesis) {
+                    console.warn('Síntese de voz não suportada');
+                    resolve();
+                    return;
+                }
+
+                // Cancelar fala anterior
+                synthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.voice = selectVoice(gender);
+                utterance.rate = 0.9; // Um pouco mais lento para clareza
+                utterance.pitch = gender === 'female' ? 1.1 : 0.9;
+                utterance.volume = 1;
+
+                // Mostrar indicador
+                document.getElementById('speaking-indicator').classList.add('active');
+
+                utterance.onend = () => {
+                    document.getElementById('speaking-indicator').classList.remove('active');
+                    resolve();
+                };
+
+                utterance.onerror = (event) => {
+                    console.error('Erro na síntese:', event);
+                    document.getElementById('speaking-indicator').classList.remove('active');
+                    resolve();
+                };
+
+                synthesis.speak(utterance);
+            });
+        }
+
+        // Toggle gravação
+        function toggleRecording() {
+            if (!recognition) {
+                alert('Reconhecimento de voz não suportado neste navegador. Use Chrome para melhor experiência.');
+                return;
+            }
+
+            if (isRecording) {
+                recognition.stop();
+                isRecording = false;
+                document.getElementById('mic-btn').classList.remove('recording');
+            } else {
+                recognition.start();
+                isRecording = true;
+                document.getElementById('mic-btn').classList.add('recording');
+            }
+        }
 
         function selectLine(line) {
             currentLine = line;
@@ -261,6 +448,7 @@
             
             showScreen('screen-chat');
             updateTherapistUI();
+            initSpeechRecognition();
             connectWebSocket();
         }
 
@@ -275,17 +463,25 @@
         function connectWebSocket() {
             updateStatus('Conectando...', '');
             const approach = currentLine + '_' + currentTherapist.id;
-            ws = new WebSocket(`ws://localhost:8000/ws/voice/${approach}`);
             
-            ws.onopen = () => updateStatus('Conectado', 'connected');
+            // Detectar se é localhost ou produção
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.host;
+            ws = new WebSocket(`${protocol}//${host}/ws/voice/${approach}`);
+            
+            ws.onopen = () => updateStatus('Conectado - Pronto para conversar', 'connected');
             ws.onmessage = (event) => handleResponse(JSON.parse(event.data));
             ws.onerror = () => updateStatus('Erro na conexão', 'error');
             ws.onclose = () => updateStatus('Desconectado', 'error');
         }
 
-        function handleResponse(data) {
+        async function handleResponse(data) {
             if (data.type === 'response') {
                 addMessage(data.text, 'therapist');
+                
+                // Falar a resposta
+                await speak(data.text, currentTherapist.gender);
+                
                 if (data.crisis_info) showCrisisAlert();
             }
         }
@@ -303,6 +499,10 @@
             const input = document.getElementById('user-input');
             const text = input.value.trim();
             if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+            
+            // Parar qualquer fala em andamento
+            synthesis.cancel();
+            
             addMessage(text, 'user');
             ws.send(JSON.stringify({ command: 'text_message', text: text }));
             input.value = '';
@@ -315,12 +515,14 @@
 
         function backToLines() {
             if (ws) ws.close();
+            synthesis.cancel();
             currentLine = null;
             showScreen('screen-lines');
         }
 
         function backToTherapists() {
             if (ws) ws.close();
+            synthesis.cancel();
             document.getElementById('messages').innerHTML = '';
             currentTherapist = null;
             showScreen('screen-therapists');
@@ -338,6 +540,11 @@
             status.textContent = text;
             status.className = 'status ' + className;
         }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            loadVoices();
+        });
     </script>
 </body>
 </html>
